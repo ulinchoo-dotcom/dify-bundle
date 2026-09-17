@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>交付包差异对比 — {{ diff.name_a }} vs {{ diff.name_b }}</title>
+{% include "_style.html.j2" %}
+</head>
+<body>
+<div class="wrap">
+  <h1>交付包差异对比</h1>
+  <div class="meta"><span>{{ diff.name_a }}</span><span>vs</span><span>{{ diff.name_b }}</span></div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">新增应用</div><div class="value">{{ diff.apps_added | length }}</div></div>
+    <div class="kpi"><div class="label">移除应用</div><div class="value">{{ diff.apps_removed | length }}</div></div>
+    <div class="kpi"><div class="label">变更应用</div>
+      <div class="value" style="color: {{ 'var(--warn)' if diff.apps_changed else 'var(--pass)' }}">{{ diff.apps_changed | length }}</div></div>
+    <div class="kpi"><div class="label">环境变量变更</div><div class="value">{{ diff.env_changes | length }}</div></div>
+    <div class="kpi"><div class="label">插件变更</div><div class="value">{{ diff.plugin_changes | length }}</div></div>
+  </div>
+
+  {% if not diff.has_differences %}
+  <div class="card" style="border-left: 4px solid var(--pass)">
+    <p style="margin:0">两份交付包完全一致。</p>
+  </div>
+  {% endif %}
+
+  {% if diff.apps_added or diff.apps_removed %}
+  <div class="card">
+    <h2 style="margin-top:0">应用集合变化</h2>
+    {% for slug in diff.apps_added %}<p class="mono" style="color:var(--pass);margin:4px 0">+ {{ slug }}</p>{% endfor %}
+    {% for slug in diff.apps_removed %}<p class="mono" style="color:var(--fail);margin:4px 0">− {{ slug }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% for slug, changes in diff.apps_changed.items() %}
+  <div class="card">
+    <h2 style="margin-top:0">{{ slug }} <span class="meta">（{{ changes | length }} 处字段变更）</span></h2>
+    <table>
+      <thead><tr><th>字段</th><th>变化</th><th>{{ diff.name_a }}</th><th>{{ diff.name_b }}</th></tr></thead>
+      <tbody>
+      {% for c in changes %}
+        <tr>
+          <td class="mono" style="word-break:break-all">{{ c.path }}</td>
+          <td>
+            {% if c.kind == 'added' %}<span class="pill pass-bg">新增</span>
+            {% elif c.kind == 'removed' %}<span class="pill fail-bg">删除</span>
+            {% else %}<span class="pill warn-bg">修改</span>{% endif %}
+          </td>
+          <td class="mono" style="word-break:break-all">{{ c.old if c.old is not none else '—' }}</td>
+          <td class="mono" style="word-break:break-all">{{ c.new if c.new is not none else '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+
+  {% if diff.env_changes %}
+  <div class="card">
+    <h2 style="margin-top:0">环境变量</h2>
+    <table>
+      <thead><tr><th>变量</th><th>变化</th><th>{{ diff.name_a }}</th><th>{{ diff.name_b }}</th></tr></thead>
+      <tbody>
+      {% for c in diff.env_changes %}
+        <tr>
+          <td class="mono">{{ c.path }}</td>
+          <td>{% if c.kind == 'added' %}<span class="pill pass-bg">新增</span>
+            {% elif c.kind == 'removed' %}<span class="pill fail-bg">删除</span>
+            {% else %}<span class="pill warn-bg">修改</span>{% endif %}</td>
+          <td class="mono">{{ c.old if c.old is not none else '—' }}</td>
+          <td class="mono">{{ c.new if c.new is not none else '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if diff.plugin_changes %}
+  <div class="card">
+    <h2 style="margin-top:0">插件依赖</h2>
+    <table>
+      <thead><tr><th>插件</th><th>变化</th><th>{{ diff.name_a }}</th><th>{{ diff.name_b }}</th></tr></thead>
+      <tbody>
+      {% for c in diff.plugin_changes %}
+        <tr>
+          <td class="mono">{{ c.path }}</td>
+          <td>{% if c.kind == 'added' %}<span class="pill pass-bg">新增</span>
+            {% elif c.kind == 'removed' %}<span class="pill fail-bg">删除</span>
+            {% else %}<span class="pill warn-bg">修改</span>{% endif %}</td>
+          <td class="mono">{{ c.old if c.old is not none else '—' }}</td>
+          <td class="mono">{{ c.new if c.new is not none else '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>

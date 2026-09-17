@@ -1,0 +1,53 @@
+app:
+  name: 智能客服助手
+  mode: workflow
+  icon: 🤖
+  icon_background: "#FFEAD5"
+  description: 回答产品咨询、查询订单状态的客户服务应用
+kind: app
+version: 0.1.5
+workflow:
+  features:
+    file_upload:
+      enabled: false
+    opening_statement: 您好，请问有什么可以帮您？
+    suggested_questions: []
+  graph:
+    nodes:
+      - id: start
+        data:
+          type: start
+          variables: []
+        position: { x: 80, y: 280 }
+      - id: llm-answer
+        data:
+          type: llm
+          title: 生成回答
+          model:
+            provider: openai
+            name: gpt-4o-mini
+            mode: chat
+          prompt_template:
+            - role: system
+              text: 你是客服助手，知识库地址 {{#env.KB_ENDPOINT#}}，调用密钥 {{#env.KB_API_KEY#}}。
+            - role: user
+              text: "{{#sys.query#}}"
+        position: { x: 380, y: 280 }
+      - id: end
+        data:
+          type: end
+          outputs:
+            - variable: answer
+              value_selector: [llm-answer, text]
+        position: { x: 680, y: 280 }
+    edges:
+      - { id: e1, source: start, target: llm-answer }
+      - { id: e2, source: llm-answer, target: end }
+  environment_variables:
+    - name: KB_ENDPOINT
+      value: https://kb.site-a.internal/v1
+      description: 知识库服务地址
+    - name: KB_API_KEY
+      value: sk-a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+      description: 知识库调用密钥
+  conversation_variables: []

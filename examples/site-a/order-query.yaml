@@ -1,0 +1,45 @@
+app:
+  name: 订单查询
+  mode: workflow
+  icon: 📦
+  icon_background: "#E4FBCC"
+  description: 根据订单号查询物流状态
+kind: app
+version: 0.1.5
+workflow:
+  features:
+    file_upload:
+      enabled: false
+  graph:
+    nodes:
+      - id: start
+        data:
+          type: start
+          variables:
+            - variable: order_no
+              required: true
+        position: { x: 80, y: 280 }
+      - id: http-query
+        data:
+          type: http-request
+          title: 查询订单接口
+          method: get
+          url: https://api.site-a.internal/orders
+          authorization:
+            type: api-key
+            config:
+              header: X-Api-Token
+              value: 9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c
+        position: { x: 380, y: 280 }
+      - id: end
+        data:
+          type: end
+          outputs:
+            - variable: result
+              value_selector: [http-query, body]
+        position: { x: 680, y: 280 }
+    edges:
+      - { id: e1, source: start, target: http-query }
+      - { id: e2, source: http-query, target: end }
+  environment_variables: []
+  conversation_variables: []

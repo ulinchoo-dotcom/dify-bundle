@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>交付包校验报告 — {{ bundle.name }}</title>
+{% include "_style.html.j2" %}
+</head>
+<body>
+<div class="wrap">
+  <h1>交付包校验报告</h1>
+  <div class="meta">
+    <span>{{ bundle.name }}</span>
+    <span>{{ bundle.apps | length }} 个应用</span>
+    <span>{{ bundle.env | length }} 个环境变量</span>
+    <span>{{ bundle.plugins | length }} 个插件依赖</span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">错误</div>
+      <div class="value" style="color: {{ 'var(--fail)' if errors else 'var(--pass)' }}">{{ errors | length }}</div></div>
+    <div class="kpi"><div class="label">警告</div>
+      <div class="value" style="color: {{ 'var(--warn)' if warnings else 'var(--pass)' }}">{{ warnings | length }}</div></div>
+    <div class="kpi"><div class="label">结论</div>
+      <div class="value" style="color: {{ 'var(--fail)' if errors else 'var(--pass)' }}">{{ '不可交付' if errors else '可交付' }}</div></div>
+  </div>
+
+  {% if errors %}
+  <div class="card" style="border-left: 4px solid var(--fail)">
+    <h2 style="margin-top:0">必须修复</h2>
+    <table>
+      <thead><tr><th>规则</th><th>问题</th><th>位置</th></tr></thead>
+      <tbody>
+      {% for f in errors %}
+        <tr>
+          <td><span class="pill fail-bg">{{ f.rule }}</span></td>
+          <td>{{ f.message }}</td>
+          <td class="mono">{{ f.location }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if warnings %}
+  <div class="card" style="border-left: 4px solid var(--warn)">
+    <h2 style="margin-top:0">建议处理</h2>
+    <table>
+      <thead><tr><th>规则</th><th>问题</th><th>位置</th></tr></thead>
+      <tbody>
+      {% for f in warnings %}
+        <tr>
+          <td><span class="pill warn-bg">{{ f.rule }}</span></td>
+          <td>{{ f.message }}</td>
+          <td class="mono">{{ f.location }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if not errors and not warnings %}
+  <div class="card" style="border-left: 4px solid var(--pass)">
+    <p style="margin:0">全部校验通过，这份交付包可以带去客户现场。</p>
+  </div>
+  {% endif %}
+</div>
+</body>
+</html>

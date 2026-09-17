@@ -1,0 +1,20 @@
+app:
+  name: FAQ 机器人
+  mode: chat
+  icon: 💬
+  icon_background: "#D3E3FD"
+  description: 基于知识库的常见问题问答
+kind: app
+version: 0.1.5
+model_config:
+  model:
+    provider: openai
+    name: gpt-4o-mini
+    mode: chat
+  pre_prompt: 你是 FAQ 机器人，只根据知识库回答。
+  dataset_configs:
+    retrieval_model: multiple
+    top_k: 4
+    datasets:
+      datasets:
+        - dataset: kb-faq-001
