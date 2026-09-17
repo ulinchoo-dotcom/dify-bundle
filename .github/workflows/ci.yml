@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: 单测（${{ matrix.python }}）
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+
+  smoke:
+    name: 端到端冒烟（示例站点全流程）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - name: 导出 → 校验 → 差异 → 模板 → 实例化 → 重建
+        run: |
+          set -e
+          dify-bundle export --source examples/site-a --out /tmp/a --name site-a
+          dify-bundle export --source examples/site-b --out /tmp/b --name site-b
+          dify-bundle check /tmp/a
+          # diff 有差异时退出码 1，这里预期有差异
+          if dify-bundle diff /tmp/a /tmp/b; then echo "预期有差异却报一致"; exit 1; fi
+          dify-bundle template /tmp/a --out /tmp/tpl
+          dify-bundle instantiate /tmp/tpl --out /tmp/c --set customer-service.app_name=冒烟客户
+          dify-bundle import /tmp/a --target /tmp/rebuilt
+          grep -q "sk-a1b2c3d4" /tmp/rebuilt/customer-service.yaml
+          # 没有密钥映射时 import 必须被拦（退出码 1）
+          mkdir /tmp/bare && cp -r /tmp/a/* /tmp/bare/ && rm -f /tmp/bare/secrets.local.yaml
+          if dify-bundle import /tmp/bare --target /tmp/x; then echo "缺密钥却没拦住"; exit 1; fi
